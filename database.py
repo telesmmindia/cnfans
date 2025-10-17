@@ -100,16 +100,25 @@ class Database:
         cursor.close()
         return accounts
 
-    async def create_order(self, user_id: int, account_id: int, product_details: str):
+    async def create_order(self, account_id: int, product_details: str):
         """Create new order"""
         cursor = self.connection.cursor()
         cursor.execute(
-            "INSERT INTO orders (user_id, account_id, product_details) VALUES (%s, %s, %s)",
-            (user_id, account_id, product_details)
+            "INSERT INTO orders ( account_id, product_details) VALUES (%s, %s)",
+            (account_id, product_details)
         )
         order_id = cursor.lastrowid
         cursor.close()
         return order_id
+
+    async def update_order_status(self, order_id: int, screenshot_path: str):
+        """Update order with screenshot path"""
+        cursor = self.connection.cursor()
+        cursor.execute(
+            "UPDATE orders SET screenshot_path = %s, status = 'completed' WHERE id = %s",
+            (screenshot_path, order_id)
+        )
+        cursor.close()
 
     async def update_order_screenshot(self, order_id: int, screenshot_path: str):
         """Update order with screenshot path"""

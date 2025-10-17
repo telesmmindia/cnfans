@@ -70,75 +70,12 @@ async def account_selected(callback: CallbackQuery, state: FSMContext):
         email=selected_account['email'],
         password=selected_account['password']
     )
+    print(selected_account)
 
-    url = 'https://cnfans.com/product?id=521663111147&platform=TAOBAO'
-
-    if not url.startswith("http") or "cnfans.com" not in url:
-        await message.answer(
-            "❌ Invalid URL.\n\nPlease send a valid CNFans product URL.",
-            reply_markup=cancel_keyboard()
-        )
-        return
-
-    await state.update_data(product_url=url)
-
-    await message.answer(
-        f"🔗 <b>Product:</b> <code>{url[:50]}...</code>\n\n"
-        f"📦 <b>Enter variant/option</b> (optional):\n\n"
-        f"Example:\n"
-        f"<code>10mm (Length)-1 Piece</code>\n\n"
-        f"Or type <code>skip</code> to continue without variant.",
-        reply_markup=cancel_keyboard()
-    )
-
-    await state.set_state(ProductOrder.entering_details)
-
-
-@router.message(ProductOrder.entering_details)
-async def process_variant(message: Message, state: FSMContext):
-    """Process product variant and start order"""
-    variant = message.text.strip()
-
-    if variant.lower() == "skip":
-        variant = None
-
-    await state.update_data(variant=variant)
-
-    # Show confirmation
-    data = await state.get_data()
-    email = data['email']
-    product_url = data['product_url']
-
-    confirmation = (
-        f"📋 <b>Order Confirmation</b>\n\n"
-        f"📧 Account: <code>{email}</code>\n"
-        f"🔗 Product: <code>{product_url[:50]}...</code>\n"
-    )
-
-    if variant:
-        confirmation += f"📦 Variant: <code>{variant}</code>\n"
-
-    confirmation += "\n⚠️ <b>Note:</b> This will use Selenium automation.\n\nProceed?"
-
-    builder = InlineKeyboardBuilder()
-    builder.button(text="✅ Start Order", callback_data="execute_order")
-    builder.button(text="❌ Cancel", callback_data="cancel")
-    builder.adjust(1)
-
-    await message.answer(confirmation, reply_markup=builder.as_markup())
-    await state.set_state(ProductOrder.confirming_order)
-
-
-@router.callback_query(F.data == "execute_order", ProductOrder.confirming_order)
-async def execute_order(callback: CallbackQuery, state: FSMContext):
-    """Execute Selenium order automation"""
-    data = await state.get_data()
-
-    email = data['email']
-    password = data['password']
-    product_url = data['product_url']
-    variant = data.get('variant')
-    account_id = data['account_id']
+    email =selected_account['email']
+    password = selected_account['password']
+    product_url = 'https://cnfans.com/product?id=521663111147&platform=TAOBAO'
+    variant = "10mm (Length)-1 Piece')"
 
     status_msg = await callback.message.edit_text(
         "🤖 <b>Starting Automation...</b>\n\n"
@@ -153,17 +90,14 @@ async def execute_order(callback: CallbackQuery, state: FSMContext):
             password=password,
             product_url=product_url,
             variant_text=variant,
-            headless=True  # Set False for debugging
+            headless=False  # Set False for debugging
         )
-
+        print(result)
         if result['success']:
             # Save order to database
             order_id = await db.create_order(
-                user_id=callback.from_user.id,
                 account_id=account_id,
-                product_url=product_url,
-                order_details=f"Variant: {variant}" if variant else "No variant"
-            )
+                product_details=product_url )
 
             await db.update_order_status(order_id, 'completed')
 
@@ -184,8 +118,7 @@ async def execute_order(callback: CallbackQuery, state: FSMContext):
                     photo = FSInputFile(result['screenshot'])
                     await callback.message.answer_photo(
                         photo=photo,
-                        caption=success_text,
-                        reply_markup=main_menu_keyboard()
+                        caption=success_text
                     )
                     await status_msg.delete()
                 except Exception as e:
@@ -195,7 +128,7 @@ async def execute_order(callback: CallbackQuery, state: FSMContext):
                 await status_msg.edit_text(success_text, reply_markup=main_menu_keyboard())
 
             await state.clear()
-            await callback.answer("✅ Order completed!", show_alert=True)
+            await callback.message.answer("✅ Order completed!", reply_markup=main_menu_keyboard())
 
         else:
             # Order failed

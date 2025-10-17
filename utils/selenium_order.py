@@ -11,6 +11,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 # Thread pool for running Selenium in background
 executor = ThreadPoolExecutor(max_workers=3)
@@ -43,7 +44,7 @@ class CNFansOrderBot:
             options.add_argument("--disable-dev-shm-usage")
 
         self.driver = uc.Chrome(options=options)
-        self.wait = WebDriverWait(self.driver, 15)
+        self.wait = WebDriverWait(self.driver, 600)
         logger.info(f"Driver initialized for {self.email}")
 
     def login(self):
@@ -63,6 +64,7 @@ class CNFansOrderBot:
             )
 
             username.clear()
+            print(self.email)
             username.send_keys(self.email)
             password.clear()
             password.send_keys(self.password)
@@ -94,13 +96,9 @@ class CNFansOrderBot:
             logger.info(f"Opening product: {product_url}")
             self.driver.get(product_url)
 
-            # Select variant if specified
-            if variant_text:
-                variant = self.wait.until(
-                    EC.element_to_be_clickable((By.XPATH, f"//span[contains(., '{variant_text}')]"))
-                )
-                self.driver.execute_script("arguments[0].click();", variant)
-                logger.info(f"✅ Selected variant: {variant_text}")
+            variant = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//span[contains(., '10mm (Length)-1 Piece')]")))
+            self.driver.execute_script("arguments[0].click();", variant)
+
 
             # Click agree checkbox
             agree_box = self.wait.until(
@@ -328,19 +326,7 @@ class CNFansOrderBot:
 # Async wrapper for Selenium
 async def execute_order_async(email: str, password: str, product_url: str, variant_text: str = None,
                               headless: bool = True):
-    """
-    Async wrapper to run Selenium order in thread pool
-
-    Args:
-        email: Account email
-        password: Account password
-        product_url: CNFans product URL
-        variant_text: Product variant (e.g., "10mm (Length)-1 Piece")
-        headless: Run browser in headless mode
-
-    Returns:
-        dict: Order result with success status
-    """
+    print(email,password)
     loop = asyncio.get_event_loop()
 
     def run_order():
