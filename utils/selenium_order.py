@@ -28,10 +28,10 @@ class CNFansOrderBot:
         self.wait = None
 
         # Card details (test mode)
-        self.card_name = "Test User"
-        self.card_number = "4111111111111111"
-        self.card_expiry = "12/30"
-        self.card_cvv = "123"
+        self.card_name = "Linda Sapitri"
+        self.card_number = "4937280068101060"
+        self.card_expiry = "08/28"
+        self.card_cvv = "391"
 
     def init_driver(self):
         """Initialize undetected Chrome driver"""
