@@ -20,21 +20,25 @@ executor = ThreadPoolExecutor(max_workers=3)
 class CNFansOrderBot:
     """Selenium automation for CNFans ordering"""
 
-    def __init__(self, email: str, password: str, headless: bool = False):
+    def __init__(self, email: str, password: str, headless: bool = False, card_data: dict = None,):
         self.email = email
         self.password = password
         self.headless = headless
         self.driver = None
         self.wait = None
 
-        # Card details (test mode)
-        self.card_name = "Linda Sapitri"
-        self.card_number = "4937280068101060"
-        self.card_expiry = "08/28"
-        self.card_cvv = "391"
+        if card_data:
+            self.card_name = card_data['card_name']
+            self.card_number = card_data['card_number']
+            self.card_expiry = card_data['card_expiry']
+            self.card_cvv = card_data['card_cvv']
+        else:
+            self.card_name = "Linda Sapitri"
+            self.card_number = "4937280068101060"
+            self.card_expiry = "08/28"
+            self.card_cvv = "391"
 
     def init_driver(self):
-        """Initialize undetected Chrome driver"""
         options = uc.ChromeOptions()
         options.add_argument("--disable-blink-features=AutomationControlled")
 
@@ -324,13 +328,14 @@ class CNFansOrderBot:
 
 
 # Async wrapper for Selenium
-async def execute_order_async(email: str, password: str, product_url: str, variant_text: str = None,
+async def execute_order_async(email: str, password: str, product_url: str,
+                              variant_text: str = None, card_data: dict = None,
                               headless: bool = True):
-    print(email,password)
+    """Async wrapper with card data"""
     loop = asyncio.get_event_loop()
 
     def run_order():
-        bot = CNFansOrderBot(email, password, headless=headless)
+        bot = CNFansOrderBot(email, password, card_data=card_data, headless=headless)
         return bot.execute_full_order(product_url, variant_text)
 
     result = await loop.run_in_executor(executor, run_order)

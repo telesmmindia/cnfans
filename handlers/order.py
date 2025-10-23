@@ -71,6 +71,15 @@ async def account_selected(callback: CallbackQuery, state: FSMContext):
         password=selected_account['password']
     )
     print(selected_account)
+    default_card = await db.get_default_card()
+    if not default_card:
+        await callback.message.edit_text(
+            "❌ <b>No Payment Method</b>\n\n"
+            "Please add a card first before ordering.",
+            reply_markup=main_menu_keyboard()
+        )
+        await callback.answer()
+        return
 
     email =selected_account['email']
     password = selected_account['password']
@@ -90,7 +99,8 @@ async def account_selected(callback: CallbackQuery, state: FSMContext):
             password=password,
             product_url=product_url,
             variant_text=variant,
-            headless=False  # Set False for debugging
+            headless=False,
+            card_data=default_card,  # Pass card details
         )
         print(result)
         if result['success']:

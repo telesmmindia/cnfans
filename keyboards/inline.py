@@ -6,6 +6,7 @@ def main_menu_keyboard():
     keyboard = InlineKeyboardBuilder()
     keyboard.button(text="🆕 Create Account", callback_data="create_account")
     keyboard.button(text="🛒 Order Product", callback_data="order_product")
+    keyboard.button(text="💳 Manage Cards", callback_data="manage_cards")
     keyboard.adjust(1)  # One button per row
     return keyboard.as_markup()
 

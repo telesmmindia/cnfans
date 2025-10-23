@@ -55,6 +55,19 @@ class Database:
             )
         """)
 
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS cards (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                card_name VARCHAR(255) NOT NULL,
+                card_number VARCHAR(20) NOT NULL,
+                card_expiry VARCHAR(7) NOT NULL,
+                card_cvv VARCHAR(4) NOT NULL,
+                is_default BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                INDEX(id)
+            )
+        """)
+
         cursor.close()
         logging.info("Tables created successfully")
 
@@ -68,6 +81,7 @@ class Database:
         account_id = cursor.lastrowid
         cursor.close()
         return account_id
+
 
     async def verify_account(self, account_id: int):
         """Mark account as verified"""
@@ -101,10 +115,9 @@ class Database:
         return accounts
 
     async def create_order(self, account_id: int, product_details: str):
-        """Create new order"""
         cursor = self.connection.cursor()
         cursor.execute(
-            "INSERT INTO orders ( account_id, product_details) VALUES (%s, %s)",
+            "insert into orders (account_id, product_details) VALUES (%s, %s)",
             (account_id, product_details)
         )
         order_id = cursor.lastrowid
@@ -112,22 +125,67 @@ class Database:
         return order_id
 
     async def update_order_status(self, order_id: int, screenshot_path: str):
-        """Update order with screenshot path"""
         cursor = self.connection.cursor()
         cursor.execute(
-            "UPDATE orders SET screenshot_path = %s, status = 'completed' WHERE id = %s",
-            (screenshot_path, order_id)
+            "update orders set screenshot_path = %s, status = 'completed' where id = %s",
+(screenshot_path, order_id)
         )
         cursor.close()
 
     async def update_order_screenshot(self, order_id: int, screenshot_path: str):
-        """Update order with screenshot path"""
         cursor = self.connection.cursor()
-        cursor.execute(
-            "UPDATE orders SET screenshot_path = %s, status = 'completed' WHERE id = %s",
+        cursor.execute("update orders set screenshot_path = %s, status = 'completed' where id = %s",
             (screenshot_path, order_id)
         )
         cursor.close()
 
+    async def add_card(self, card_name: str, card_number: str,
+                       card_expiry: str, card_cvv: str, is_default: bool = False):
+        cursor = self.connection.cursor()
+
+        if is_default:
+            cursor.execute("update cards set is_default = false")
+
+        cursor.execute(
+            """insert into cards (card_name, card_number, card_expiry, card_cvv, is_default) 
+               values (%s, %s, %s, %s, %s)""",
+            (card_name, card_number, card_expiry, card_cvv, is_default)
+        )
+        card_id = cursor.lastrowid
+        cursor.close()
+        return card_id
+
+    async def get_user_cards(self):
+        cursor = self.connection.cursor()
+        cursor.execute(f"select * from cards order by is_default desc, created_at desc")
+        cards = cursor.fetchall()
+        cursor.close()
+        return cards
+
+    async def get_card_by_id(self, card_id: int):
+        cursor = self.connection.cursor()
+        cursor.execute(f"select * from cards where id = {card_id}")
+        card = cursor.fetchone()
+        cursor.close()
+        return card
+
+    async def delete_card(self, card_id: int):
+        cursor = self.connection.cursor()
+        cursor.execute(f"delete from cards WHERE id = {card_id}")
+        cursor.close()
+
+    async def set_default_card(self, card_id: int):
+        cursor = self.connection.cursor()
+        cursor.execute("update cards SET is_default = false")
+
+        cursor.execute(f"update cards set is_default = true where id = {card_id}")
+        cursor.close()
+
+    async def get_default_card(self):
+        cursor = self.connection.cursor()
+        cursor.execute("select * from cards where is_default = true limit 1")
+        card = cursor.fetchone()
+        cursor.close()
+        return card
 
 db = Database()
