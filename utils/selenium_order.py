@@ -310,8 +310,8 @@ class CNFansOrderBot:
                 return {"success": False, "step": "payment", "error": "Payment submission failed"}
 
             # Step 7: Take screenshot
+            time.sleep(60)
             screenshot = self.take_screenshot(f"order_{self.email}_{int(time.time())}.png")
-
             return {
                 "success": True,
                 "screenshot": screenshot,
