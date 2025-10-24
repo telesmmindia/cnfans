@@ -1,5 +1,5 @@
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
@@ -27,8 +27,7 @@ class Config:
     DB_USER: str = "root"
     DB_PASSWORD: str = "3kkxb7jdfh"
     DB_NAME: str = "yz_project"
-
-    API: APIEndpoints = APIEndpoints()
+    API: APIEndpoints = field(default_factory=lambda: APIEndpoints())
 
 config = Config()
 
