@@ -4,6 +4,10 @@ from PIL import Image
 import pytesseract
 import asyncio
 import logging
+import pytesseract
+from PIL import Image
+# Add this line to tell pytesseract where Tesseract is installed
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 logger = logging.getLogger(__name__)
 
